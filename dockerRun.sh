@@ -30,4 +30,4 @@ id=$(sudo docker run -dit --restart='always' \
 -p 30090-30099:30090-30099 \
 $APP_NAME)
 echo "ID = $id"
-sudo docker exec -it $id /bin/bash
+# sudo docker exec -it $id /bin/bash

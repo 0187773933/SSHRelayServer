@@ -7,3 +7,6 @@ cd ./SCRIPTS
 
 cd ..
 ./dockerRun.sh
+
+cd ./SCRIPTS
+./06_build_go_clients.sh
