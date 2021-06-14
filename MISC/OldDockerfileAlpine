@@ -1,0 +1,46 @@
+FROM alpine:latest
+RUN apk add linux-headers
+RUN apk add gcc
+RUN apk add nano
+RUN apk add tar
+RUN apk add musl-dev
+RUN apk add bash
+RUN apk add openrc
+RUN apk add openssl
+RUN apk add git
+RUN apk add make
+RUN apk add wget
+
+RUN apk add openssh
+
+RUN mkdir /KEYS2
+RUN addgroup -S sshrelay
+RUN chown -R root:sshrelay /KEYS2/
+RUN chmod g+w /KEYS2/
+
+ADD gen_users.sh /gen_users.sh
+RUN chmod +x gen_users.sh
+#RUN /gen_users.sh
+
+COPY sshd_config /etc/ssh/sshd_config
+
+RUN mkdir -p /run/openrc/
+RUN touch /run/openrc/softlevel
+#RUN /etc/init.d/sshd --dry-run start
+RUN cp -R KEYS2 KEYS3
+
+RUN mkdir -p /etc/ssh/keys
+RUN ssh-keygen -A
+RUN mv /etc/ssh/ssh_host_* /etc/ssh/keys/
+
+RUN mkdir -p /scripts
+COPY gen_users.sh /scripts
+WORKDIR /scripts
+RUN chmod +x gen_users.sh
+RUN ./gen_users.sh
+
+#VOLUME [ “/sys/fs/cgroup” ]
+#ENTRYPOINT [ "/etc/init.d/sshd" , "start" ]
+ENTRYPOINT [ "/bin/bash" ]
+#ENTRYPOINT [ "/etc/init.d/sshd" , "--dry-run" , "start"  ]
+#ENTRYPOINT [ " ]
