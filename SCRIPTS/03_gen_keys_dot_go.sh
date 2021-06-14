@@ -4,14 +4,14 @@ printf "package keys\n\n" > keys.go
 
 printf "var PUBLIC = [][]byte{\n" >> keys.go
 for number in {1..254}; do
-	PublicKeyData=$(<./BUILD/KEYS/user${number}.pub)
+	PublicKeyData=$(<../BUILD/KEYS/user${number}.pub)
 	printf "\t[]byte(\`$PublicKeyData\`) ,\n" >> keys.go
 done
 printf "}\n\n" >> keys.go
 
 printf "var PRIVATE = [][]byte{\n" >> keys.go
 for number in {1..254}; do
-	PrivateKeyData=$(<./BUILD/KEYS/user${number})
+	PrivateKeyData=$(<../BUILD/KEYS/user${number})
 	printf "\t[]byte(\`$PrivateKeyData\`) ,\n" >> keys.go
 done
 printf "}\n" >> keys.go

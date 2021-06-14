@@ -21,7 +21,6 @@ for number in {1..254}; do
     printf "\t{ $Min , $Max } , \n" >> portmap.go
 done
 printf "}" >> portmap.go
-exit
 
 cp portmap.go ../GoClientSource/Windows/v1/portmap/
 mv portmap.go ../GoClientSource/Linux/v1/portmap/
