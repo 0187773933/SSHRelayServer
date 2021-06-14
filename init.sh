@@ -5,4 +5,5 @@ cd ./SCRIPTS
 ./03_gen_keys_dot_go.sh
 ./04_gen_port_map_dot_go.sh
 
+cd ..
 ./dockerRun.sh
