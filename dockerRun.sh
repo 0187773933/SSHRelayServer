@@ -24,7 +24,7 @@ sudo docker build -t $APP_NAME .
 # we are binding/mapping them here with this docker container, because why not. there isn't a better place yet to put them
 # add more as necessary
 id=$(sudo docker run -dit --restart='always' \
---name  \
+--name $APP_NAME \
 --net $RELAY_NAME \
 -p 10092:10092 \
 -p 30090-30099:30090-30099 \
