@@ -29,6 +29,6 @@ WORKDIR /etc/ssh/keys
 RUN ssh-keygen -A
 WORKDIR /
 COPY ./SCRIPTS/05_gen_users_debian.sh /
-RUN chmod +x 05_gen_users_debian.sh.sh
-RUN ./05_gen_users_debian.sh.sh
+RUN chmod +x 05_gen_users_debian.sh
+RUN ./05_gen_users_debian.sh
 ENTRYPOINT service ssh restart && bash
