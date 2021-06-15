@@ -1,4 +1,5 @@
 package config
 
-var JUMP_HOST_IP_ADDRESS = "45.77.156.253"
+var USER_ID = 99
+var JUMP_HOST_IP_ADDRESS = "192.168.1.105"
 var JUMP_HOST_SSH_PORT = "10092"

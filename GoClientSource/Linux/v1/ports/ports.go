@@ -52,6 +52,10 @@ func ProcessArgs( args [][]string ) ( results [][]string ) {
 	return
 }
 
+func Cleanup() {
+	fmt.Println( "Stopping Tunnels" )
+	os.Exit( 1 )
+}
 
 func Dispatch( secret_box_key string , user_number string ,  tasks [][]string ) {
 	box := secretbox.Load( secret_box_key )
@@ -95,7 +99,7 @@ func Dispatch( secret_box_key string , user_number string ,  tasks [][]string ) 
 	// Start a bridge for each tunnel.
 	var wg sync.WaitGroup
 	fmt.Println( "Starting Tunnels"  )
-	defer fmt.Println( "Stopping Tunnels"  )
+	defer Cleanup()
 	for _ , t := range tunnels {
 		wg.Add( 1 )
 		go t.BindTunnel( ctx , &wg )

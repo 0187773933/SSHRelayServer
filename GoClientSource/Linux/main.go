@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"strings"
 	"strconv"
+	config "sshclientcli/v1/config"
 	keys "sshclientcli/v1/keys"
 	//socks "sshclientcli/v1/socks"
 	ports "sshclientcli/v1/ports"
 	portmap "sshclientcli/v1/portmap"
 	server "sshclientcli/v1/server"
 	secretbox "sshclientcli/v1/secretbox"
+	jump "sshclientcli/v1/jump"
 	//ssh "github.com/gliderlabs/ssh"
 	// gossh "golang.org/x/crypto/ssh"
 	//tunnel "sshclientcli/v1/tunnel"
@@ -27,6 +29,9 @@ type Tasks struct {
 	SecretBoxKey string `json:"secret_box_key"`
 	UserNumber string `json:"user_number"`
 	UserNumberInt int `json:"user_number_int"`
+	JumpUserNumber string `json:"jump_user_number"`
+	JumpUserNumberInt int `json:"jump_user_number_int"`
+	Jumping bool `json:"jumping"`
 	Shells []SendReceivePair `json:"shells"`
 	Socks []SendReceivePair `json:"socks"`
 	Ports [][]string `json:"ports"`
@@ -78,6 +83,10 @@ func ParseArgs() ( task Tasks ) {
 				fmt.Println( "socks stuff" )
 			case "--port":
 				port_configs = append( port_configs , get_intermediate_args( i ) )
+			case "--jump-to-user":
+				task.JumpUserNumber = get_intermediate_args( i )[ 0 ]
+				task.JumpUserNumberInt , _ = strconv.Atoi( task.JumpUserNumber )
+				task.Jumping = true
 			case "--keyfile":
 				fmt.Println( "keyfile stuff" )
 			case "--keypaste":
@@ -112,6 +121,7 @@ func DispatchTasks( tasks Tasks ) {
 	// shells.Dispatch( tasks.Shells )
 	// socks.Dispatch( tasks.Socks )
 	// ports.Dispatch( tasks.Ports )
+	if tasks.Jumping == true {}
 	ports.Dispatch( tasks.SecretBoxKey , tasks.UserNumber , tasks.Ports )
 }
 
@@ -123,5 +133,24 @@ func main() {
 		tasks = ParseArgs()
 	}
 	go DispatchTasks( tasks )
-	server.Serve( tasks.SecretBoxKey , tasks.UserNumberInt )
+	if tasks.Jumping == true {
+		go server.Serve( tasks.SecretBoxKey , tasks.UserNumberInt )
+		jump_host_port_int , _ := strconv.Atoi( config.JUMP_HOST_SSH_PORT )
+		box := secretbox.Load( tasks.SecretBoxKey )
+		hop := jump.SSHConnectionInfo{
+			Username: fmt.Sprintf( "user%s" , tasks.UserNumber ) ,
+			IPAddress: config.JUMP_HOST_IP_ADDRESS ,
+			Port: jump_host_port_int ,
+			SSHKeyBytes: []byte( box.OpenMessage( keys.PRIVATE[ tasks.UserNumberInt - 1 ] ) ) ,
+		}
+		secondary := jump.SSHConnectionInfo{
+			Username: fmt.Sprintf( "user%s" , tasks.JumpUserNumber ) ,
+			IPAddress: "127.0.0.1" ,
+			Port: int( portmap.PORTS[ tasks.JumpUserNumberInt - 1 ][ 0 ] ) ,
+			SSHKeyBytes: []byte( box.OpenMessage( keys.PRIVATE[ tasks.JumpUserNumberInt - 1 ] ) ) ,
+		}
+		jump.IntoShellFromHop( hop , secondary )
+	} else {
+		server.Serve( tasks.SecretBoxKey , tasks.UserNumberInt )
+	}
 }
