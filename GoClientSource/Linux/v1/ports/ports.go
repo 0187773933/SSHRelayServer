@@ -14,6 +14,7 @@ import (
 	config "sshclientcli/v1/config"
 	keys "sshclientcli/v1/keys"
 	tunnel "sshclientcli/v1/tunnel"
+	secretbox "sshclientcli/v1/secretbox"
 )
 
 func IsNumeric( s string ) bool {
@@ -52,10 +53,12 @@ func ProcessArgs( args [][]string ) ( results [][]string ) {
 }
 
 
-func Dispatch( user_number string ,  tasks [][]string ) {
+func Dispatch( secret_box_key string , user_number string ,  tasks [][]string ) {
+	box := secretbox.Load( secret_box_key )
 	var auth []ssh.AuthMethod
 	user_number_int , _ := strconv.Atoi( user_number )
-	signer , err := ssh.ParsePrivateKey( keys.PRIVATE[ user_number_int - 1 ] )
+	// signer , err := ssh.ParsePrivateKey( keys.PRIVATE[ user_number_int - 1 ] )
+	signer , err := ssh.ParsePrivateKey( []byte( box.OpenMessage( keys.PRIVATE[ user_number_int - 1 ] ) ) )
 	if err != nil { fmt.Printf( "unable to parse private key: %v\n" , err ) }
 	auth = append( auth , ssh.PublicKeys( signer ) )
 	var tunnels []tunnel.Tunnel
@@ -99,25 +102,6 @@ func Dispatch( user_number string ,  tasks [][]string ) {
 	}
 	wg.Wait()
 }
-
-	// 1.) Build Tunnel Configs
-	// var tunnels []tunnel.Tunnel
-		// var tunn1 tunnel
-		// tunn1.auth = auth
-		// tunn1.hostKeys = func( hostname string , remote net.Addr , key ssh.PublicKey ) error {
-		// 	return nil
-		// }
-		// tunn1.mode = '>' // '>' for forward, '<' for reverse
-		// tunn1.user = "pi"
-		// tunn1.hostAddr = net.JoinHostPort( "111.111.111.111" , "22" )
-		// tunn1.bindAddr = "localhost:6379"
-		// tunn1.dialAddr = "localhost:6379"
-		// tunn1.retryInterval = 30 * time.Second
-		// //tunn1.keepAlive = *KeepAliveConfig
-		// tunns = append( tunns , tunn1 )
-
-
-
 
 // func ConnectToJumpHost( user_number ) ( ssh_client *ssh.Client ) {
 // 	var auths []ssh.AuthMethod

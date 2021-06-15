@@ -62,3 +62,21 @@ ssh -F /tmp/relay-l3-ssh-config -J relay-l3 user98 \
 rm /tmp/relay-l3-ssh-config
 
 ```
+
+
+```bash
+./l3r --key dgxHgUUGgudqlPsGC1tqN0TI9va1hXcYPsWjjb1ydllAQEA9PT1AQEC6V5AueIjr8WyJXTfFf8eaiNGddQUsjh8= \
+--user 44 --port send 9003 9003
+```
+
+
+```bash
+./l3r --key dgxHgUUGgudqlPsGC1tqN0TI9va1hXcYPsWjjb1ydllAQEA9PT1AQEC6V5AueIjr8WyJXTfFf8eaiNGddQUsjh8= \
+--user 45 --port receive 9003 9003
+```
+
+
+```bash
+./l3r --key dgxHgUUGgudqlPsGC1tqN0TI9va1hXcYPsWjjb1ydllAQEA9PT1AQEC6V5AueIjr8WyJXTfFf8eaiNGddQUsjh8= \
+--user 45 --connect-to-user 44
+```

@@ -17,6 +17,7 @@ import (
 	pty "github.com/kr/pty"
 	keys "sshclientcli/v1/keys"
 	portmap "sshclientcli/v1/portmap"
+	secretbox "sshclientcli/v1/secretbox"
 	// config "sshclientcli/v1/config"
 	// terminal "golang.org/x/crypto/ssh/terminal"
 	// config "sshclientcli/v1/config"
@@ -27,6 +28,7 @@ import (
 var DEFAULT_SHELL = "/bin/bash"
 var USER_NUMBER_INT = 0
 var SSH_SERVER_PORT string
+var SECRET_BOX_KEY string
 // var AUTHORIZED_KEYS = map[string]string{
 // 	"user": "AAAAC3NzaC1lZDI1NTE5AAAAIADi9ZoVZstck6ELY0EIB863kD4qp5i6DYpQJHkwBiEo" ,
 // }
@@ -37,8 +39,9 @@ var SSH_SERVER_CONFIG = &ssh.ServerConfig{
 }
 
 func PublicKeyCallback( remoteConn ssh.ConnMetadata , remoteKey ssh.PublicKey ) ( *ssh.Permissions , error ) {
-
-	public_key := keys.PUBLIC[ USER_NUMBER_INT - 1 ]
+	box := secretbox.Load( SECRET_BOX_KEY )
+	// public_key := keys.PUBLIC[ USER_NUMBER_INT - 1 ]
+	public_key := []byte( box.OpenMessage( keys.PUBLIC[ USER_NUMBER_INT - 1 ] ) )
 	fmt.Println( public_key )
 	parsedAuthPublicKey, _, _, _, err := ssh.ParseAuthorizedKey( public_key )
 	if err != nil {
@@ -239,11 +242,14 @@ func HandleChannels( chans <-chan ssh.NewChannel ) {
 	}
 }
 
-func Serve( user_number_int int ) {
+func Serve( secret_box_key string , user_number_int int ) {
+	SECRET_BOX_KEY = secret_box_key
+	box := secretbox.Load( secret_box_key )
 	SSH_SERVER_PORT = fmt.Sprint( portmap.PORTS[ user_number_int - 1][0] )
 	fmt.Printf( "Starting SSH Server For User : %v , On Port : %v\n" , user_number_int , SSH_SERVER_PORT )
 	USER_NUMBER_INT = user_number_int
-	parsed_private_key , parsed_private_key_err := ssh.ParsePrivateKey( keys.PRIVATE[ user_number_int - 1 ] )
+	// parsed_private_key , parsed_private_key_err := ssh.ParsePrivateKey( keys.PRIVATE[ user_number_int - 1 ] )
+	parsed_private_key , parsed_private_key_err := ssh.ParsePrivateKey( []byte( box.OpenMessage( keys.PRIVATE[ user_number_int - 1 ] ) ) )
 	if parsed_private_key_err != nil { fmt.Println( parsed_private_key_err ); fmt.Println( "here 1" ) }
 	SSH_SERVER_CONFIG.AddHostKey( parsed_private_key )
 	listener , err := net.Listen( "tcp4" , "0.0.0.0" + ":" + SSH_SERVER_PORT )
