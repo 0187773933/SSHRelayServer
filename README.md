@@ -78,5 +78,5 @@ rm /tmp/relay-l3-ssh-config
 
 ```bash
 ./l3r --key dgxHgUUGgudqlPsGC1tqN0TI9va1hXcYPsWjjb1ydllAQEA9PT1AQEC6V5AueIjr8WyJXTfFf8eaiNGddQUsjh8= \
---user 45 --connect-to-user 44
+--user 45 --jump-to-user 44
 ```
