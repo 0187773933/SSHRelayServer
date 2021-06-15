@@ -1,5 +1,8 @@
 #!/bin/bash
 
+
+# AUTOSSH MONITOR PORTS MONKAS = +1
+
 # Hard Coded Ports
 # Hardcoded Service Routes, People Can Port Forward To
 # 0 - 1023 = Kernel

@@ -49,12 +49,35 @@ func get_intermediate_args( current_position int ) ( args []string ) {
 }
 func print_user_info( secret_box_key string , user_number_int int ) {
 	box := secretbox.Load( secret_box_key )
-	fmt.Printf( "user%v PUBLIC Key ===\n" , user_number_int )
+	fmt.Printf( "\nuser%v PUBLIC Key ===\n" , user_number_int )
 	fmt.Println( string( box.OpenMessage( keys.PUBLIC[ user_number_int - 1 ] ) ) )
 	fmt.Printf( "user%v PRIVATE Key ===\n" , user_number_int )
 	fmt.Println( string( box.OpenMessage( keys.PRIVATE[ user_number_int - 1 ] ) ) )
 	fmt.Printf( "user%v PORT Range ===  %v - %v\n" , user_number_int , portmap.PORTS[ user_number_int - 1 ][ 0 ] , portmap.PORTS[ user_number_int - 1 ][ 1 ] )
 	fmt.Printf( "PORT : %v is automatically forwarded for this binaries locally running ssh server\n" , portmap.PORTS[ user_number_int - 1 ][ 0 ] )
+
+	fmt.Printf( "\nsudo nano /etc/systemd/system/autossh-l3-relay.service\n" )
+	fmt.Printf( "\n[Unit]\n" )
+	fmt.Printf( "Description=Keeps a tunnel to 'RelayMain' open\n" )
+	fmt.Printf( "After=network.target\n" )
+	fmt.Printf( "[Service]\n" )
+	fmt.Printf( "Environment=\"AUTOSSH_PIDFILE=/var/run/autossh.pid\"\n" )
+	fmt.Printf( "Environment=\"AUTOSSH_POLL=60\"\n" )
+	fmt.Printf( "Environment=\"AUTOSSH_FIRST_POLL=30\"\n" )
+	fmt.Printf( "Environment=\"AUTOSSH_GATETIME=0\"\n" )
+	fmt.Printf( "Environment=\"AUTOSSH_DEBUG=1\"\n" )
+	fmt.Printf( "ExecStart=/usr/bin/autossh -M %v -R %v:localhost:22 \\\n" , ( portmap.PORTS[ user_number_int - 1 ][ 0 ] + 1 ) , portmap.PORTS[ user_number_int - 1 ][ 0 ] )
+	fmt.Printf( "-o ServerAliveInterval=60 -o ServerAliveCountMax=3 \\\n" )
+	fmt.Printf( "-o IdentitiesOnly=yes  -o StrictHostKeyChecking=no \\\n" )
+	fmt.Printf( "-o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -F /dev/null \\\n" )
+	fmt.Printf( "user%v@%s -p %v -i /home/morphs/.ssh/user%v\n" , user_number_int , config.JUMP_HOST_IP_ADDRESS , config.JUMP_HOST_SSH_PORT , user_number_int )
+	fmt.Printf( "ExecStop=/usr/bin/pkill autossh\n" )
+	fmt.Printf( "Restart=always\n" )
+	fmt.Printf( "[Install]\n" )
+	fmt.Printf( "WantedBy=multi-user.target\n\n" )
+
+	fmt.Printf( "sudo systemctl daemon-reload && sudo systemctl restart autossh-l3-relay.service && sudo systemctl status autossh-l3-relay.service\n\n" )
+
 }
 func ParseArgs() ( task Tasks ) {
 	// var shell_configs [][]string
@@ -145,9 +168,17 @@ func main() {
 		}
 		secondary := jump.SSHConnectionInfo{
 			Username: fmt.Sprintf( "user%s" , tasks.JumpUserNumber ) ,
+			// Username: "morphs" ,
 			IPAddress: "127.0.0.1" ,
 			Port: int( portmap.PORTS[ tasks.JumpUserNumberInt - 1 ][ 0 ] ) ,
 			SSHKeyBytes: []byte( box.OpenMessage( keys.PRIVATE[ tasks.JumpUserNumberInt - 1 ] ) ) ,
+// 			SSHKeyBytes: []byte(`-----BEGIN OPENSSH PRIVATE KEY-----
+// AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+// AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+// AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+// AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+// AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
+// -----END OPENSSH PRIVATE KEY-----`) ,
 		}
 		jump.IntoShellFromHop( hop , secondary )
 	} else {
