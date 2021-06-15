@@ -18,7 +18,7 @@ for number in {1..254}; do
 	PrivateKeyData=$(<../BUILD/KEYS/user${number})
 	../SecretBoxBinaries/linux/arm/secretbox --key "$SecretBoxKey" seal file "../BUILD/KEYS/user${number}" "../BUILD/KEYS/user${number}.sealed"
 	SealedPrivateKeyData=$(<../BUILD/KEYS/user${number}.sealed)
-	printf '\t"%s" ,\n' SealedPrivateKeyData >> keys.go
+	printf '\t"%s" ,\n' $SealedPrivateKeyData >> keys.go
 done
 printf "}\n" >> keys.go
 
