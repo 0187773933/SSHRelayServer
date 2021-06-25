@@ -146,7 +146,7 @@ func DispatchTasks( tasks Tasks ) {
 	// shells.Dispatch( tasks.Shells )
 	// socks.Dispatch( tasks.Socks )
 	// ports.Dispatch( tasks.Ports )
-	if tasks.Jumping == true {}
+	// if tasks.Jumping == true {}
 	ports.Dispatch( tasks.SecretBoxKey , tasks.UserNumber , tasks.Ports )
 }
 

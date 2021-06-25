@@ -140,6 +140,8 @@ func ConnectToSecondary( jump_host_ssh_client *ssh.Client , secondary_user_info 
 	return
 }
 
+
+
 // Single Hop
 func IntoShellFromHop( hop_connection_info SSHConnectionInfo , secondary_user_info SSHConnectionInfo ) {
 	fmt.Println( "Jumping into Shell of Other User" )
@@ -152,6 +154,7 @@ func IntoShellFromHop( hop_connection_info SSHConnectionInfo , secondary_user_in
 	if session_error != nil { panic( session_error ) }
 	defer session.Close()
 	fmt.Printf( "Step [%d] of 4\n" , 4 )
+
 	terminal_config := &TerminalConfig {
 		Term: "xterm" ,
 		Height: 40 ,
@@ -166,12 +169,15 @@ func IntoShellFromHop( hop_connection_info SSHConnectionInfo , secondary_user_in
 	session.Stdout = os.Stdout
 	session.Stderr = os.Stderr
 
+	fmt.Println( "1.) Requesting PTY" )
 	session_pty_err := session.RequestPty( terminal_config.Term , terminal_config.Height , terminal_config.Weight , terminal_config.Modes );
 	if session_pty_err != nil { panic( session_pty_err ) }
 
+	fmt.Println( "2.) Requesting Shell" )
 	session_shell_err := session.Shell()
 	if session_shell_err != nil { panic( session_shell_err ) }
 
+	fmt.Println( "3.) Waiting?" )
 	session_shell_wait_err := session.Wait()
 	if session_shell_wait_err != nil { panic( session_shell_wait_err ) }
 }

@@ -8,7 +8,6 @@ import (
 	"os"
 	"encoding/binary"
 	"net"
-	"reflect"
 	"errors"
 	"syscall"
 	// "unsafe"
@@ -236,17 +235,18 @@ func LaunchPowershell( channel ssh.Channel ) {
 
 	// Pipe session to bash and visa-versa
 	go func() {
-		io.Copy(channel, out_pipe)
-		// io.Copy(channel, out_pipe)
-		once.Do(close)
+		io.Copy( channel , out_pipe )
+		// io.Copy( out_pipe , channel )
+		once.Do( close )
 	}()
 
 	go func() {
-		io.Copy(in_pipe, channel)
-		// io.Copy(in_pipe, channel)
-		once.Do(close)
+		io.Copy( in_pipe , channel )
+		// io.Copy( channel , in_pipe )
+		once.Do( close )
 	}()
 }
+
 
 func HandleChannels( chans <-chan ssh.NewChannel ) {
 	// Service the incoming Channel channel.
@@ -260,17 +260,15 @@ func HandleChannels( chans <-chan ssh.NewChannel ) {
 			continue
 		}
 		channel, requests, err := newChannel.Accept()
-		fmt.Println( reflect.TypeOf(channel) )
-		fmt.Println( channel )
 		if err != nil {
 			fmt.Printf("could not accept channel (%s)", err)
 			continue
 		}
-
 		// Sessions have out-of-band requests such as "shell", "pty-req" and "env"
 		go func(in <-chan *ssh.Request) {
 			for req := range in {
 				//fmt.Printf("%v %s", req.Payload, req.Payload)
+				fmt.Println( req.Type )
 				ok := false
 				switch req.Type {
 				case "exec":
@@ -305,6 +303,7 @@ func HandleChannels( chans <-chan ssh.NewChannel ) {
 					LaunchPowershell( channel )
 					ok = true
 				case "pty-req":
+					fmt.Println( "inside pty-req" )
 					// if len( OPEN_PTYS ) > 0 {
 					// 	ok = true
 					// 	termLen := req.Payload[3]
@@ -313,7 +312,9 @@ func HandleChannels( chans <-chan ssh.NewChannel ) {
 					// 	fmt.Printf( "%v === %v\n" , w , h )
 					// 	OPEN_PTYS[ len( OPEN_PTYS ) - 1 ].Resize( uint16( h ) , uint16( w ) )
 					// }
+					// LaunchPowershellForPTY( channel )
 					ok = true
+					req.Reply(true , []byte("ok"))
 					continue
 				case "window-change":
 					// if len( OPEN_PTYS ) > 0 {
@@ -324,6 +325,7 @@ func HandleChannels( chans <-chan ssh.NewChannel ) {
 					// 	OPEN_PTYS[ len( OPEN_PTYS ) - 1 ].Resize( uint16( h ) , uint16( w ) )
 					// }
 					ok = true
+					req.Reply(true , []byte("ok"))
 					continue
 				}
 				if !ok {
