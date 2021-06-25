@@ -14,6 +14,7 @@ import (
 	config "sshclientcli/v1/config"
 	keys "sshclientcli/v1/keys"
 	tunnel "sshclientcli/v1/tunnel"
+	secretbox "sshclientcli/v1/secretbox"
 )
 
 func IsNumeric( s string ) bool {
@@ -59,7 +60,8 @@ func Cleanup() {
 func Dispatch( user_number string ,  tasks [][]string ) {
 	var auth []ssh.AuthMethod
 	user_number_int , _ := strconv.Atoi( user_number )
-	signer , err := ssh.ParsePrivateKey( keys.PRIVATE[ user_number_int - 1 ] )
+	// signer , err := ssh.ParsePrivateKey( keys.PRIVATE[ user_number_int - 1 ] )
+	signer , err := ssh.ParsePrivateKey( []byte( box.OpenMessage( keys.PRIVATE[ user_number_int - 1 ] ) ) )
 	if err != nil { fmt.Printf( "unable to parse private key: %v\n" , err ) }
 	auth = append( auth , ssh.PublicKeys( signer ) )
 	var tunnels []tunnel.Tunnel

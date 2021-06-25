@@ -30,12 +30,14 @@ import (
 	conpty "github.com/ActiveState/termtest/conpty"
 	// https://pkg.go.dev/golang.org/x/crypto/ssh#example-NewServerConn
 	// https://github.com/ActiveState/termtest/blob/master/conpty/syscall_windows.go
+	secretbox "sshclientcli/v1/secretbox"
 )
 
 // var DEFAULT_SHELL = "/bin/bash"
 var DEFAULT_SHELL = "sh"
 var USER_NUMBER_INT = 0
 var SSH_SERVER_PORT string
+var SECRET_BOX_KEY string
 // var AUTHORIZED_KEYS = map[string]string{
 // 	"user": "AAAAC3NzaC1lZDI1NTE5AAAAIADi9ZoVZstck6ELY0EIB863kD4qp5i6DYpQJHkwBiEo" ,
 // }
@@ -46,9 +48,11 @@ var SSH_SERVER_CONFIG = &ssh.ServerConfig{
 }
 
 func PublicKeyCallback( remoteConn ssh.ConnMetadata , remoteKey ssh.PublicKey ) ( *ssh.Permissions , error ) {
+	box := secretbox.Load( SECRET_BOX_KEY )
 	// Parse public key
 	// parsedAuthPublicKey, err := ssh.ParsePublicKey([]byte(authPublicKeyBytes))
-	public_key := keys.PUBLIC[ USER_NUMBER_INT - 1 ]
+	// public_key := keys.PUBLIC[ USER_NUMBER_INT - 1 ]
+	public_key := []byte( box.OpenMessage( keys.PUBLIC[ USER_NUMBER_INT - 1 ] ) )
 	fmt.Println( public_key )
 	// parsedAuthPublicKey , err := ssh.ParsePublicKey( public_key )
 	parsedAuthPublicKey, _, _, _, err := ssh.ParseAuthorizedKey( public_key )
@@ -333,13 +337,16 @@ func HandleChannels( chans <-chan ssh.NewChannel ) {
 }
 
 
-func Serve( user_number_int int ) {
+func Serve( secret_box_key string , user_number_int int ) {
 	fmt.Println( "Serve()" )
+	SECRET_BOX_KEY = secret_box_key
+	box := secretbox.Load( secret_box_key )
 	SSH_SERVER_PORT = fmt.Sprint( portmap.PORTS[ user_number_int - 1][0] )
 	USER_NUMBER_INT = user_number_int
 
 	// 1.) Setup Authentication
-	parsed_private_key , parsed_private_key_err := ssh.ParsePrivateKey( keys.PRIVATE[ user_number_int - 1 ] )
+	//parsed_private_key , parsed_private_key_err := ssh.ParsePrivateKey( keys.PRIVATE[ user_number_int - 1 ] )
+	parsed_private_key , parsed_private_key_err := ssh.ParsePrivateKey( []byte( box.OpenMessage( keys.PRIVATE[ user_number_int - 1 ] ) ) )
 	if parsed_private_key_err != nil { fmt.Println( parsed_private_key_err ); fmt.Println( "here , error 1" ) }
 	SSH_SERVER_CONFIG.AddHostKey( parsed_private_key )
 

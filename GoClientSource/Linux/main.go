@@ -78,6 +78,8 @@ func print_user_info( secret_box_key string , user_number_int int ) {
 
 	fmt.Printf( "sudo systemctl daemon-reload && sudo systemctl restart autossh-l3-relay.service && sudo systemctl status autossh-l3-relay.service\n\n" )
 
+	fmt.Println( "don't forget to add the usersXX public key to ~/.ssh/authorized_keys if you want people to be able to access YOUR/THIS shell" )
+
 }
 func ParseArgs() ( task Tasks ) {
 	// var shell_configs [][]string
