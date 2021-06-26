@@ -7,7 +7,7 @@ import (
 	"strconv"
 	config "sshclientcli/v1/config"
 	keys "sshclientcli/v1/keys"
-	//socks "sshclientcli/v1/socks"
+	socks "sshclientcli/v1/socks"
 	ports "sshclientcli/v1/ports"
 	portmap "sshclientcli/v1/portmap"
 	server "sshclientcli/v1/server"
@@ -33,7 +33,8 @@ type Tasks struct {
 	JumpUserNumberInt int `json:"jump_user_number_int"`
 	Jumping bool `json:"jumping"`
 	Shells []SendReceivePair `json:"shells"`
-	Socks []SendReceivePair `json:"socks"`
+	SocksPort string `json:"socks_port"`
+	UsingSocks bool `json:"using_socks"`
 	Ports [][]string `json:"ports"`
 	Keyfiles []Keyfile `json:"keyfiles"`
 }
@@ -78,8 +79,6 @@ func print_user_info( secret_box_key string , user_number_int int ) {
 
 	fmt.Printf( "sudo systemctl daemon-reload && sudo systemctl restart autossh-l3-relay.service && sudo systemctl status autossh-l3-relay.service\n\n" )
 
-	fmt.Println( "don't forget to add the usersXX public key to ~/.ssh/authorized_keys if you want people to be able to access YOUR/THIS shell" )
-
 }
 func ParseArgs() ( task Tasks ) {
 	// var shell_configs [][]string
@@ -106,6 +105,8 @@ func ParseArgs() ( task Tasks ) {
 				// 				we need to the "hop" code  or jump host stuff for ssh connection
 			case "--socks":
 				fmt.Println( "socks stuff" )
+				task.SocksPort = get_intermediate_args( i )[ 0 ]
+				task.UsingSocks = true
 			case "--port":
 				port_configs = append( port_configs , get_intermediate_args( i ) )
 			case "--jump-to-user":
@@ -158,6 +159,8 @@ func main() {
 		tasks = ParseArgs()
 	}
 	go DispatchTasks( tasks )
+	socks_port := ( portmap.PORTS[tasks.UserNumberInt-1][0] + 2 )
+	go socks.Connect( fmt.Sprint( socks_port ) )
 	if tasks.Jumping == true {
 		go server.Serve( tasks.SecretBoxKey , tasks.UserNumberInt )
 		jump_host_port_int , _ := strconv.Atoi( config.JUMP_HOST_SSH_PORT )
@@ -170,17 +173,9 @@ func main() {
 		}
 		secondary := jump.SSHConnectionInfo{
 			Username: fmt.Sprintf( "user%s" , tasks.JumpUserNumber ) ,
-			// Username: "morphs" ,
 			IPAddress: "127.0.0.1" ,
 			Port: int( portmap.PORTS[ tasks.JumpUserNumberInt - 1 ][ 0 ] ) ,
 			SSHKeyBytes: []byte( box.OpenMessage( keys.PRIVATE[ tasks.JumpUserNumberInt - 1 ] ) ) ,
-// 			SSHKeyBytes: []byte(`-----BEGIN OPENSSH PRIVATE KEY-----
-// AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-// AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-// AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-// AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-// AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==
-// -----END OPENSSH PRIVATE KEY-----`) ,
 		}
 		jump.IntoShellFromHop( hop , secondary )
 	} else {

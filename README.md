@@ -80,3 +80,11 @@ rm /tmp/relay-l3-ssh-config
 ./l3r --key dgxHgUUGgudqlPsGC1tqN0TI9va1hXcYPsWjjb1ydllAQEA9PT1AQEC6V5AueIjr8WyJXTfFf8eaiNGddQUsjh8= \
 --user 45 --jump-to-user 44
 ```
+
+
+/usr/local/bin/l3r is a script / bash_rc alias alternative that calls the actuall go binary
+so that we might just call this from systemd
+```bash
+#!/bin/bash
+/usr/local/bin/l3r_binary --key dgxHgUUGgudqlPsGC1tqN0TI9va1hXcYPsWjjb1ydllAQEA9PT1AQEC6V5AueIjr8WyJXTfFf8eaiNGddQUsjh8= --user 11 "$@"
+```
